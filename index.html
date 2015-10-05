@@ -5,16 +5,16 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <title> Forget Me. </title>
-        
-        <meta name="description" content="Awakens is an adless web-based chat client. 
-        		We're open source on github and also have pages on social media! 
+
+        <meta name="description" content="Awakens is an adless web-based chat client.
+        		We're open source on github and also have pages on social media!
         		Join us, like us, subscribe to us and share us.">
-        		
-        <meta name="keywords" content="don't, even, blink, awakens.me, awakensme, awakens, spooks4me, 
-                         2spooks4me, thisspooksme, spooksme, this, spooks, me, chat, web, browser, online, 
-                         irc, relay, fun, random, text, font, color, commands, spooky, spoopy, chan, channel, 
+
+        <meta name="keywords" content="don't, even, blink, awakens.me, awakensme, awakens, spooks4me,
+                         2spooks4me, thisspooksme, spooksme, this, spooks, me, chat, web, browser, online,
+                         irc, relay, fun, random, text, font, color, commands, spooky, spoopy, chan, channel,
                          world, free, cool, awesome, play, freedom, spooks.me, online chat room, chat box, hpp;r">
-        		
+
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -27,25 +27,29 @@
         <link rel="apple-touch-startup-image" sizes="640x960" href="img/splash_640x960.png" />
         <link rel="apple-touch-startup-image" sizes="768x1024" href="img/splash_768x1024.png" />
 	<link id="icon" rel="shortcut icon" href="img/icon2.ico">
-	
+
         <link rel="stylesheet" href="/css/normalize.css">
         <link rel="stylesheet" href="/css/client.css">
         <link rel="stylesheet" href="/vendor/jquery-ui-1.11.0/jquery-ui.min.css">
       	<link rel="stylesheet" href="/vendor/jquery.contextMenu.css">
         <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Droid+Sans">
-        
+
     </head>
     <body>
         <script>window.channel="${channel}";</script>
         <div id="youtube"></div>
-        <div id="messages" class="full-height scrollbar_default"></div>
-        <div id="input-bar"><div>
-         <textarea id="input-message" type="text" placeholder="Enter chat message. Then press enter to submit." autocomplete="off" autofocus></textarea>
-        <div id="tabbed-menu-cotainer">
-            <div id="tabbed-menu"></div>
-            <div id="user-list" class="online tabbed-list"></div>
-        </div></div>
-        <div id="bigimg"></div>
+        <div id="messages" class="full-height scrollbar_default">
+            <table id='sam'><tr><td id='content'></td></tr></table>
+        </div>
+        <div id="input-bar">
+            <div>
+                <textarea id="input-message" type="text" placeholder="Enter chat message. Then press enter to submit." autocomplete="off" autofocus></textarea>
+                <div id="tabbed-menu-cotainer">
+                    <div id="tabbed-menu"></div>
+                    <div id="user-list" class="online tabbed-list"></div>
+                </div>
+            </div>
+            <div id="bigimg"></div>
         </div>
         <script src="/socket.io/socket.io.js"></script>
         <script src="/vendor/jquery-2.1.4.min.js"></script>

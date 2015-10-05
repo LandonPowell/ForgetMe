@@ -67,9 +67,7 @@ $(function() {
 
     //Updates the large center 'message'
     socket.on('centermsg', function(data) {
-        $('#sam').remove();
-        $('#messages').append("<table id=sam style='width:100%;'><tr><td style=text-align:center;vertical-align:middle;> " + parser.parse(data.msg) +"</td></tr><table>")
-    	CLIENT.set({ msg : data.msg });
+        CLIENT.set('msg', parser.parse(data.msg));
     });
 
     //Client side check to see if user is active
@@ -216,7 +214,7 @@ $(function() {
     CLIENT = new (Backbone.Model.extend({
         initialize : function() {
             /* Initialize from localstorage. */
-            'color join font style mute mute_speak play nick images security msg flair styles bg access_level role part menu_top menu_left menu_display mask frame'.split(' ').forEach(function(key) {
+            'color join font style mute mute_speak play nick images security flair styles bg access_level role part menu_top menu_left menu_display mask frame'.split(' ').forEach(function(key) {
                 var item = localStorage.getItem('chat-' + key);
                 this.set(key, item);
                 this.on('change:' + key, function(m, value) {
@@ -387,6 +385,9 @@ $(function() {
             unread++;
             updateTitle();
         }
+    });
+    CLIENT.on('change:msg', function(m, msg){
+        $('#content').text(msg);
     });
     //Show notification when it is updated
     CLIENT.on('change:notification', function(m, notification) {

@@ -286,7 +286,7 @@ a:hover {
 \*/
 
 #input-bar {
-    position: absolute;
+    position: fixed;
     background-color: #3A3A3A;
     bottom: 0;
     width: 100%;
@@ -365,7 +365,13 @@ a:hover {
     left: 0;
     font-size: 50px;
     right: 0;
+    width: 100%;
     z-index: 1;
+}
+
+#content {
+    text-align:center;
+    vertical-align:middle;
 }
 
 /*\
