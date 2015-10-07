@@ -163,6 +163,7 @@ function createChannel(io, channelName) {
                     var message = params.message.substring(0, settings.limits.message);
                     roomEmit('message', {
                         type : 'action-message',
+                        nick : user.nick,
                         message : user.nick + ' ' + params.message,
                         count : ++count
                     });

@@ -179,15 +179,6 @@ a:hover {
 .note-message {
     color: #992222;
 }
-
-.alert-message {
-    color: #2379DB;
-}
-
-.passive-message {
-    color: #4DC1CF;
-}
-
 .action-message {
     color: rgba(102, 178, 255, 1);
 }

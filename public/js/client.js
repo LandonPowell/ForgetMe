@@ -639,7 +639,6 @@ $(function() {
 
 $(function() {
     var DATE_FORMAT = 'shortTime';
-    var animation = null;
     var roles = ['god','super','admin','mod','basic','mute'];
 
     //Creates message to be displayed
@@ -665,21 +664,20 @@ $(function() {
     function buildMessage(message) {
         var el = $('<div class="message"></div>');
         var sound = 'message';
-        var content;
-        message.type && el.addClass(message.type);
-        var time = message.time ? new Date(message.time) : new Date();
-        var check = new RegExp('\\b'+ CLIENT.get('nick') +'\\b',"gi");
+        var content, valid;
+        el.addClass(message.type);
+        var time = [new Date(), new Date(message.time)][+ !!message.time];
+        var check = new RegExp('\\b'+ CLIENT.get('nick') +'\\b','gi');
         var alert = CLIENT.get('alert');
-        var valid = false;
         //Check if msg contains any keywords
-        for (var i = 0; i < alert.length; i++){
+        for (var i = 0; i < alert.length; i++) {
             if (message.message.indexOf(alert[i]) != -1) {
                 valid = true;
                 break;
             }
         }
-        if (message.type == 'personal-message'){
-            if(message.nick != CLIENT.get('nick')){
+        if (message.type == 'personal-message') {
+            if (message.nick != CLIENT.get('nick')) {
                 CLIENT.lastNick = message.nick;
             }
             window.PM.show(message, message.from);
@@ -697,42 +695,34 @@ $(function() {
             el.children().first().css('font-size','0.2em');
         }
         //Alert the user if their name is mentioned
-        if ((check.test(message.message.replace('\\','')) || valid) && (message.nick != CLIENT.get('nick') && message.type == 'chat-message' || message.type == 'action-message' && message.message.split(' ')[0] != CLIENT.get('nick')) || (message.type == 'personal-message' && message.nick != CLIENT.get('nick'))){
+        if ((check.test(message.message.replace('\\','')) || valid) && message.nick != CLIENT.get('nick') && ('chat-message action-message personal-message'.split(' ').indexOf(message.type) + 1)){
             	message.count && el.children('.timestamp').attr('class', "timestamp highlightname");
             	sound = 'name'
         }
         //Alert user if they are quoted
-        if (message.message.search(/>>(\d)+/g) != -1) {
-            for (var i = 0; i < message.message.match(/>>(\d)+/g).length; i++) {
-                var lastMatch = message.message.match(/>>(\d)+/g)[i];
-                    if ($('.spooky_msg_'+lastMatch.substring(2)).last().length > 0) {
-                        var recurse = $('.spooky_msg_'+lastMatch.substring(2)).last().text();
-                        var name = recurse.match(/[^:]*/i)[0];
-                        if (name == CLIENT.get('nick') && CLIENT.get('nick') != message.nick) {
-                            message.count && el.children('.timestamp').attr('class', "timestamp highlightname");
-                            sound = 'name'
-                        }
-                    }
+        if ((message.message.search(/>>(\d)+/g) + 1) && CLIENT.get('nick') != message.nick) {// <--- Not a typo
+            var matches = message.message.match(/>>(\d)+/g);
+            for (var i = 0, j = matches.length; i < j; i++) {
+                var lastQuote = $('.spooky_msg_'+matches[i].substring(2)).last();
+                if (lastQuote.length && lastQuote.text().match(/[^:]*/i)[0] == CLIENT.get('nick')) {
+                    message.count && el.children('.timestamp').attr('class', "timestamp highlightname");
+                    sound = 'name';
+                }
             }
         }
         if (message.nick) {
-            var parsedFlair = null;
-            if (message.flair) {
-                parsedFlair = parser.parse(message.flair);
-                if (parser.removeHTML(parsedFlair) != message.nick) {
-                    parsedFlair = null;
-                } else {
-                    parser.getAllFonts(message.flair);
-                }
+            var parsedFlair = parser.parse(message.flair);
+            if (message.flair && parser.removeHTML(parsedFlair) == message.nick) {
+                parser.getAllFonts(message.flair);
+            } else if (message.flair) {
+                parsedFlair = null;
             }
-            if(message.hat != 'nohat' && message.type == 'chat-message'){
+            if (message.hat != 'nohat' && message.type == 'chat-message') {
                 $('<span class="hat ' + message.hat + '" style="background:url(\'/css/img/hats/'+message.hat+'.png\') no-repeat center;background-size: 30px 30px;"></span>').appendTo(content);
             }
-            if (parsedFlair) {
-                $('<span class="nick"></span>').html(message.type == 'spoken-message' ? parsedFlair : parsedFlair + ':').appendTo(content);
-            } else {
-                $('<span class="nick"></span>').text(message.type == 'spoken-message' ? message.nick : message.nick + ':').appendTo(content);
-            }
+            var flair = parsedFlair || message.nick;
+            if (message.type == 'spoken-message') flair += ':';
+            $('<span class="nick"></span>').html(flair).appendTo(content);
         }
         if (message.message) {
             var parsed;
@@ -749,23 +739,13 @@ $(function() {
                     parsed = message.message;
                     break;
                 case 'general-message':
-                    parsed = parser.parse(message.message, true);
-                    break;
-                case 'alert-message':
-                    parsed = parser.parse(message.message);
-                    break;
                 case 'note-message':
+                case 'error-message':
                     parsed = parser.parse(message.message);
                     break;
                 case 'anon-message':
-                    if(CLIENT.get('role') == null || roles.indexOf(CLIENT.get('role')) >= 2){
-                        parsed = parser.parse( '#6464C0' + 'anon' + ': ' + message.message);
-                    } else {
-                        parsed = parser.parse( '#6464C0' + message.name + ': ' + message.message);
-                    }
-                    break;
-                case 'error-message':
-                    parsed = parser.parse(message.message);
+                    var name = (!CLIENT.get('role') || roles.indexOf(CLIENT.get('role'))) > 1 ? 'anon' : message.name;
+                    parsed = parser.parse( '#6464C0' + name + ': ' + message.message);
                     break;
                 default:
                     parsed = parser.parseLinks(message.message);
@@ -776,8 +756,7 @@ $(function() {
         //Load and play speak messages
         if (message.type == 'spoken-message' && CLIENT.get('mute') != 'on' && CLIENT.get('mute_speak') != 'on') {
             //var voices = ['default','yoda', 'old', 'loli', 'whisper', 'badguy'];
-            var uri = message.source
-            var uri = 'http://tts.peniscorp.com/speak.lua?' + encodeURIComponent(message.message);
+            var uri = message.source || ('http://tts.peniscorp.com/speak.lua?' + encodeURIComponent(message.message));
             var html = [ '<embed src="', uri, '" hidden="true" autoplay>' ].join('');
 			var html = [ '<audio autoplay="autoplay"><source src="', uri, '" type="audio/wav"></source></audio>' ].join('');
             var $audio = $(html).appendTo('body');
@@ -793,15 +772,9 @@ $(function() {
     window.scrollToBottom = function() {
         var containerEl = $('#messages');
         var scrollDelta = containerEl.prop('scrollHeight') - containerEl.prop('clientHeight');
-        animation && animation.stop(true, false);
-        animation = containerEl.animate({
+        containerEl.stop().animate({
             scrollTop : scrollDelta
-        }, {
-            duration : 100,
-            complete : function() {
-                animation = null;
-            }
-        });
+        }, 100);
     }
 
     function appendMessage(el) {
@@ -809,9 +782,7 @@ $(function() {
         var scrolledToBottom = containerEl.prop('scrollTop') + containerEl.prop('clientHeight') >= containerEl.prop('scrollHeight') - 50;
         el.appendTo(containerEl);
         var scrollDelta = containerEl.prop('scrollHeight') - containerEl.prop('clientHeight');
-        if (scrolledToBottom && scrollDelta > 0) {
-            scrollToBottom();
-        }
+        if (scrolledToBottom && scrollDelta > 0) scrollToBottom();
     }
 
     window.imageError = function(el) {
@@ -822,13 +793,13 @@ $(function() {
 });
 
 //Quotes any clicked message and formats it as needed
-$('#messages').on("click", ".message .timestamp", function(e){
+$('#messages').on('click', '.message .timestamp', function(e){
     var number = e.currentTarget.title;
-    if (number != "") {
-        var textBox = document.getElementById('input-message');
-        textBox.value == '' || textBox.value.substring(textBox.value.length - 1) == ' ' ? textBox.value = textBox.value + '>>' + number + ' ' :
-        textBox.value = textBox.value + ' >>' + number + ' ';
-        $('#input-message').focus();
+    if (number.length) {
+        var textBox = $('#input-message');
+        var value = textBox.val();
+        var space = value && value.split(' ').last() ? ' ' : '';
+        textBox.focus().val(value + space + '>>' + number + ' ');
     }
 });
 
@@ -1013,7 +984,7 @@ $(function() {
 // ------------------------------------------------------------------
 
 (function() {
-    //Object with all command data. See ch4t.io/help for more information
+    //Object with all commands. For more information see ch4t.io/help
     window.COMMANDS = {
         help : function() {
             CLIENT.show({
@@ -1097,7 +1068,8 @@ $(function() {
             params : [ 'message$' ]
         },
         clear : function() {
-            $('#messages').empty();
+            // Clear #messages and add the /msg element back.
+            $('#messages').empty().append("<table id='sam'><tr><td id='content'></td></tr></table>");
         },
         unmute : function() {
             CLIENT.set('mute', 'off');
@@ -1108,10 +1080,8 @@ $(function() {
         style : {
             params : [ 'style$' ],
             handler : function(params) {
-                if (params.style == 'default' || params.style == 'none') {
-                    params.style = null;
-                }
-                CLIENT.set('style', params.style);
+                var test = params.style;
+                CLIENT.set('style', [test][+ (test == 'default' || test == 'none')]);
             }
         },
         font : {
@@ -1119,11 +1089,8 @@ $(function() {
             handler : function(params) {
                 var old = CLIENT.get('font');
                 if (params.font == 'default' || params.font == 'none') {
-                    CLIENT.set('font',null);
-                    return;
-                }
-                //Make sure font is valid before 9001 of them get appended to the HTML head
-                if (CLIENT.badfonts.indexOf(params.font) == -1) {
+                    CLIENT.unset('font');
+                } else if (CLIENT.badfonts.indexOf(params.font) < 0) {
                     $.ajax({
                         url : 'https://fonts.googleapis.com/css?family=' + encodeURIComponent(params.font),
                         success : function(){CLIENT.set('font', params.font);},
@@ -1388,15 +1355,13 @@ $(function() {
                 var url = params.url
                 if (url.substring(0, 4) !== 'http'){
                     var url = 'http://' + params.url
-                } if (url.substring(0, 4) == 'http'){
-                    video('event', 'embed', url);
-                    //console.log(url)
                 } else {
-                    CLIENT.error('Insert a valid link to embed');
+                    video('event', 'embed', url);
+                    //console.log(url);
                 }
             }
         }
-    }
+    };
 
     var command_data = {
         blank : [['logout', 'unregister', 'whoami'],//Server
@@ -1413,7 +1378,7 @@ $(function() {
 })();
 
 // Add user to a list
-add = function(att, user){
+add = function(att, user) {
     if (user.toLowerCase() != CLIENT.get('nick').toLowerCase()) {
         var block = CLIENT.get(att);
         if (typeof block !== "object") { block = [] }
@@ -1458,7 +1423,7 @@ parser = {
     fontRegex : /(\$|(&#36;))([\w \-\,Ã‚Â®]*)\|(.*)$/,
     multiple : function(str, mtch, rep) {
         var ct = 0;
-        while (str.match(mtch) != null && ct++ < 9)
+        while (str.match(mtch) && ct++ < 9)
             str = str.replace(mtch, rep);
         return str;
     },
@@ -1487,17 +1452,26 @@ parser = {
     removeHTML : function(parsed) {
         return $('<span>' + parsed + '</span>').text();
     },
+    convertToHTML : function(str) {
+        str = str.replace(/\n/g, '\\n')
+            .replace(/&/gi, '&amp;')
+            .replace(/>/gi, '&gt;')
+            .replace(/</gi, '&lt;')
+            .replace(/"/gi, '&quot;')
+            .replace(/#/gi, '&#35;')
+        // Codes containing hashtags
+            .replace(/\$/gi, '&#36;')
+            .replace(/'/gi, '&#39;')
+            .replace(/~/gi, '&#126;')
+            .replace(/\\\\n/g, this.repslsh)
+            .replace(/\\n/g, '<br />')
+            .replace(this.repslsh, '\\\\n');
+        return str;
+    },
     //Shorter version of parse
     parseLinks : function(str) {
-        // Convert chars to html codes
-        str =str.replace(/&/gi, '&amp;')
-				.replace(/>/gi, '&gt;')
-				.replace(/</gi, '&lt;')
-				.replace(/\n/g, '\\n')
-				.replace(/\$/gi, '&#36;')
-				.replace(/\\\\n/g, this.repslsh)
-				.replace(/\\n/g, '<br />')
-				.replace(this.repslsh, '\\\\n');
+        // Add HTML codes
+        str = this.convertToHTML(str);
         // Remove replacement codes
         str = str.replace(RegExp(this.replink, 'g'), '');
         str = str.replace(RegExp(this.repslsh, 'g'), '');
@@ -1535,30 +1509,16 @@ parser = {
         escs = str.match(/<[^>]+?>/gi);
         str = str.replace(/<[^>]+?>/gi, this.repslsh);
         str = str.replace(/\s{2}/gi, ' &nbsp;');
-        for (i in escs) {
-            str = str.replace(this.repslsh, escs[i]);
-        }
+        for (i in escs) str = str.replace(this.repslsh, escs[i]);
         return str;
     },
     isColor : function(str){
         check = new RegExp("/(^#[0-9A-F]{6})|(^[0-9A-F]{6})|(^#[0-9A-F]{3})|(^[0-9A-F]{3})|(#" + this.coloreg + ")","i");
-        return check.test(str)
+        return check.test(str);
     },
-    parse : function(str, second) {
-        // Convert chars to html codes
-        str = str.replace(/\n/g, '\\n');
-        str = str.replace(/&/gi, '&amp;');
-        str = str.replace(/>/gi, '&gt;');
-        str = str.replace(/</gi, '&lt;');
-        str = str.replace(/"/gi, '&quot;');
-        str = str.replace(/#/gi, '&#35;');
-        // Codes containing hashtags go below
-        str = str.replace(/\$/gi, '&#36;');
-        str = str.replace(/'/gi, '&#39;');
-        str = str.replace(/~/gi, '&#126;');
-        str = str.replace(/\\\\n/g, this.repslsh);
-        str = str.replace(/\\n/g, '<br />');
-        str = str.replace(this.repslsh, '\\\\n');
+    parse : function(str) {
+        // Add HTML codes
+        str = this.convertToHTML(str);
         // Replace links
         str = str.replace(this.linkreg, function(match, p1){if (p1) {return match;} else {return '<a target="_blank" href="' + match + '">' + match + '</a>';}});
         // Filter out embed links (Temporarily Disabled)
@@ -1581,8 +1541,7 @@ parser = {
         str = str.replace(RegExp(this.replink, 'g'), '');
         str = str.replace(RegExp(this.repslsh, 'g'), '');
         var escs = str.match(/\\./g);
-        if (!second) // Does not remove backslashes for gen-messages
-            str = str.replace(/\\./g, this.repslsh);
+        str = str.replace(/\\./g, this.repslsh);
         // Add styles
         if (CLIENT.get('styles') == 'on'){
             str = this.multiple(str, /\/\!!([^\|]+)\|?/g, '<div class=neon>$1</div>');
