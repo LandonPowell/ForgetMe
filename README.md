@@ -1,4 +1,7 @@
-ch4t
+#WARNING, THIS SOFTWARE IS DEPRECATED. PLEASE SEE https://github.com/LandonPowell/SeaFour INSTEAD. 
+
+
+#ch4t
 ================
 
 A simple Node.JS chat server with some user management and games.
