@@ -39,7 +39,7 @@ function createChannel(io, channelName) {
     var count = 0;
     var command_access = {
         bg : ['mod',3],
-        topic : ['mod',3],
+        topic : ['basic',3],
         theme : ['mod',3],
         note : ['admin',0],
         kick : ['mod',2],
