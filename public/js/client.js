@@ -988,7 +988,7 @@ $(function() {
             params : [ 'message$' ]
         },
         login : {
-            params : [ 'password', 'nick$' ]
+            params : [ 'nick$', 'password' ]
         },
         register : {
             params : [ 'initial_password' ]
